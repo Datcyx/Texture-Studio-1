@@ -888,6 +888,7 @@ sqlite_SaveAllObjectText(index)
 
 	stmt_execute(objecttextallsave);
 	stmt_close(objecttextallsave);
+
 }
 
 
@@ -2516,7 +2517,7 @@ ImportMap(playerid)
 				format(tempmap, 64, "tstudio/ImportMaps/%s",stext);
 
 				new File:f;
-				new icount, rcount;
+				new icount, rcount, tcount;
 				f = fopen(tempmap,io_read);
 
 				// Read lines and import data
@@ -2590,17 +2591,160 @@ ImportMap(playerid)
 					}
 					else if(type == 4)
 					{
-						//SetObjectMaterialText(tmp, text[], index, mat_size, fontface[], fontsize, bold, color, backcolor, alignment)
-                        
-                        // start by extracting text[], removing it from the parameters
-                        // then sscanf all other params separate
+
+		
+						new text[MAX_TEXT_LENGTH];
+						new extractedText[128];
+						new temp[MAX_TEXT_LENGTH];
+						new inQuote = false;  
+						new len = strlen(templine);
+						new j = 0; 
+						new text2[MAX_TEXT_LENGTH];
+
+				
+						for (new i = 0; i < len; i++)
+						{
+							if (templine[i] == '"') 
+							{
+							
+								if (inQuote)
+								{
+									
+									extractedText[j] = '\0'; 
+									break; 
+								}
+								else
+								{
+								
+									inQuote = true;
+								}
+							}
+							else if (inQuote) 
+							{
+								temp[j] = templine[i];
+								j++;
+							}
+						}
+						if (j > 0)
+						{
+							text = temp;
+							strreplace(templine, temp, "None");//"
+						}else{
+							continue;
+						}
+						
+						strreplace(templine, "\"", "");//"
+						
+						
+						new mat_size, fontsize, bold, textalignment;
+						new fontface[500];
+						new index =  0;
+						new tempfontcolor;
+						new tempbackcolor;
+						
+						if(sscanf(templine, "p<,>s[16]is[500]is[500]iihhi", tmp, index, text2, mat_size, fontface, fontsize, bold, tempfontcolor, tempbackcolor, textalignment))
+
+						
+						if(strcmp(tmp, templastid)) 
+							continue;
+
+						
+						ObjectData[templast][ousetext] = 1;
+						ObjectData[templast][oTextFontSize] = fontsize;
+						ObjectData[templast][oFontBold] = bold;
+						ObjectData[templast][oFontColor] = tempfontcolor;
+						ObjectData[templast][oBackColor] = tempbackcolor;
+						ObjectData[templast][oAlignment] = textalignment;
+						new matsize = mat_size; //im to lazy
+						if(matsize == 10)
+						{
+							ObjectData[templast][oFontSize] = 0;
+						}else if(matsize == 20)
+						{
+							ObjectData[templast][oFontSize] = 1;
+						}else if(matsize == 30)
+						{
+							ObjectData[templast][oFontSize] = 2;
+						}else if(matsize == 40)
+						{
+							ObjectData[templast][oFontSize] = 3;
+						}else if(matsize == 50)
+						{
+							ObjectData[templast][oFontSize] = 4;
+						}else if(matsize == 60)
+						{
+							ObjectData[templast][oFontSize] = 5;
+						}else if(matsize == 70)
+						{
+							ObjectData[templast][oFontSize] = 6;
+						}else if(matsize == 80)
+						{
+							ObjectData[templast][oFontSize] = 7;
+						}else if(matsize == 90)
+						{
+							ObjectData[templast][oFontSize] = 8;
+						}else if(matsize == 100)
+						{
+							ObjectData[templast][oFontSize] = 9;
+						}else if(matsize == 110)
+						{
+							ObjectData[templast][oFontSize] = 10;
+						}else if(matsize == 120)
+						{
+							ObjectData[templast][oFontSize] = 11;
+						}else if(matsize == 130)
+						{
+							ObjectData[templast][oFontSize] = 12;
+						}else if(matsize == 140)
+						{
+							ObjectData[templast][oFontSize] = 13;
+						}
+						
+						ObjectData[templast][oObjectText] = text;
+						if(!strcmp(fontface, "Ariel", true))
+						{
+							ObjectData[templast][oFontFace] = 0;
+						}else if(!strcmp(fontface, "Webdings", true))
+						{
+							ObjectData[templast][oFontFace] = 1;
+						}else if(!strcmp(fontface, "Wingdings", true))
+						{
+							ObjectData[templast][oFontFace] = 2;
+						}else if(!strcmp(fontface, "GTAWEAPON3", true))
+						{
+							ObjectData[templast][oFontFace] = 3;
+						}else if(!strcmp(fontface, "Calibri", true))
+						{
+							ObjectData[templast][oFontFace] = 4;
+						}else if(!strcmp(fontface, "Engravers MT", true))
+						{
+							ObjectData[templast][oFontFace] = 5;
+						}
+						else if(!strcmp(fontface, "Quartz MS", true))
+						{
+							ObjectData[templast][oFontFace] = 6;
+						}
+						else if(!strcmp(fontface, "Segoe Keycaps", true))
+						{
+							
+							ObjectData[templast][oFontFace] = 7;
+						}
+						else if(!strcmp(fontface, "Fixedsys", true))
+						{
+							ObjectData[templast][oFontFace] = 8;
+						}
+						
+						sqlite_SaveAllObjectText(templast);
+						UpdateObjectText(templast);
+						tcount++;
+                      
 					}
-                    
+                    UpdateObjectText(templast);
                     UpdateObject3DText(templast, true);
 				}
 				db_end_transaction(EditMap);
 
-				format(templine, sizeof(templine), "%i objects were imported, %i removed buildings were imported", icount, rcount);
+				format(templine, sizeof(templine), "%i objects were imported, %i removed buildings were imported, %i Material Text were imported", icount, rcount, tcount);
 				SendClientMessage(playerid, STEALTH_GREEN, templine);
 
 				// Were done importing
